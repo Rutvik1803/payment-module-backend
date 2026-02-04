@@ -1,6 +1,8 @@
 import express, { Express, Request, Response } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import healthRoutes from './routes/healthRoutes'
+import pool from './config/database';
 
 dotenv.config();
 
@@ -12,10 +14,8 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Health check route
-app.get('/health', (req: Request, res: Response) => {
-    res.json({ status: 'OK', message: 'Payment Module API is running' });
-});
+
+app.use('/', healthRoutes);
 
 // Start server
 app.listen(PORT, () => {
