@@ -1,8 +1,9 @@
-import express, { Express, Request, Response } from 'express';
+import express, { Express } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import healthRoutes from './routes/healthRoutes'
+import healthRoutes from './routes/healthRoutes';
 import pool from './config/database';
+import { errorHandler, notFoundHandler } from './middleware/errorHandler';
 
 dotenv.config();
 
@@ -14,8 +15,14 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-
+// Routes
 app.use('/', healthRoutes);
+
+// 404 Handler (must be after all routes)
+app.use(notFoundHandler);
+
+// Error Handler (must be last)
+app.use(errorHandler);
 
 // Start server
 app.listen(PORT, () => {
