@@ -8,7 +8,10 @@
     "build": "tsc",
     "start": "node dist/server.js",
     "test": "jest",
-    "migrate": "ts-node src/database/migrate.ts"
+    "migrate": "ts-node src/database/migrate.ts",
+    "seed": "ts-node src/database/seed.ts",
+    "db:reset": "npm run migrate && npm run seed",
+    "generate-hash": "ts-node src/utils/generateHash.ts"
   },
   "keywords": [],
   "author": "",
