@@ -1,7 +1,8 @@
 import { Router } from 'express';
 import pool from '../config/database';
 import { asyncHandler } from '../utils/asyncHandler';
-import { sendSuccess, sendError } from '../utils/responseFormatter';
+import { sendSuccess } from '../utils/responseFormatter';
+import { authenticate } from '../middleware/auth';
 
 const router = Router();
 
@@ -20,6 +21,14 @@ router.get('/health/db', asyncHandler(async (req, res) => {
         status: 'OK',
         timestamp: result.rows[0].now,
     }, 'Database connection successful');
+}));
+
+// Protected route for testing authentication
+router.get('/health/auth', authenticate, asyncHandler(async (req, res) => {
+    sendSuccess(res, {
+        user: req.user,
+        message: 'You are authenticated!',
+    }, 'Auth test successful');
 }));
 
 export default router;
