@@ -2,6 +2,7 @@ import express, { Express } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import healthRoutes from './routes/healthRoutes';
+import authRoutes from './routes/authRoutes';
 import pool from './config/database';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
 
@@ -17,6 +18,7 @@ app.use(express.urlencoded({ extended: true }));
 
 // Routes
 app.use('/', healthRoutes);
+app.use('/api/auth', authRoutes);
 
 // 404 Handler (must be after all routes)
 app.use(notFoundHandler);
