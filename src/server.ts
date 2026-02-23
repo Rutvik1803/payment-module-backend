@@ -3,6 +3,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import healthRoutes from './routes/healthRoutes';
 import authRoutes from './routes/authRoutes';
+import paymentPlanRoutes from './routes/paymentPlanRoutes';
 import pool from './config/database';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
 
@@ -19,6 +20,7 @@ app.use(express.urlencoded({ extended: true }));
 // Routes
 app.use('/', healthRoutes);
 app.use('/api/auth', authRoutes);
+app.use('/api/payment-plans', paymentPlanRoutes);
 
 // 404 Handler (must be after all routes)
 app.use(notFoundHandler);
