@@ -437,18 +437,18 @@ class InvoiceController {
             },
             payment_plan: invoice.plan
                 ? {
-                      id: invoice.plan.id,
-                      total_amount: invoice.plan.total_amount,
-                      status: invoice.plan.status,
-                  }
+                    id: invoice.plan.id,
+                    total_amount: invoice.plan.total_amount,
+                    status: invoice.plan.status,
+                }
                 : null,
             user: invoice.user
                 ? {
-                      id: invoice.user.id,
-                      email: invoice.user.email,
-                      first_name: invoice.user.first_name,
-                      last_name: invoice.user.last_name,
-                  }
+                    id: invoice.user.id,
+                    email: invoice.user.email,
+                    first_name: invoice.user.first_name,
+                    last_name: invoice.user.last_name,
+                }
                 : null,
         };
 
