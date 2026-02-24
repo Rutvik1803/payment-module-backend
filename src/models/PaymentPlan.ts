@@ -79,24 +79,37 @@ export const findPaymentPlansByUserId = async (
 export const findAllPaymentPlans = async (
     filters?: PaymentPlanFilters
 ): Promise<PaymentPlan[]> => {
-    let sql = 'SELECT * FROM payment_plans WHERE 1=1';
+    let sql = `
+        SELECT 
+            pp.*,
+            json_build_object(
+                'id', u.id,
+                'email', u.email,
+                'first_name', u.first_name,
+                'last_name', u.last_name,
+                'role', u.role
+            ) as user
+        FROM payment_plans pp
+        LEFT JOIN users u ON pp.user_id = u.id
+        WHERE 1=1
+    `;
     const values: any[] = [];
     let paramCount = 1;
 
     if (filters?.user_id) {
-        sql += ` AND user_id = $${paramCount}`;
+        sql += ` AND pp.user_id = $${paramCount}`;
         values.push(filters.user_id);
         paramCount++;
     }
 
     if (filters?.status) {
-        sql += ` AND status = $${paramCount}`;
+        sql += ` AND pp.status = $${paramCount}`;
         values.push(filters.status);
         paramCount++;
     }
 
     if (filters?.type) {
-        sql += ` AND type = $${paramCount}`;
+        sql += ` AND pp.type = $${paramCount}`;
         values.push(filters.type);
         paramCount++;
     }
