@@ -3,6 +3,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import healthRoutes from './routes/healthRoutes';
 import authRoutes from './routes/authRoutes';
+import userRoutes from './routes/userRoutes';
 import paymentPlanRoutes from './routes/paymentPlanRoutes';
 import invoiceRoutes from './routes/invoiceRoutes';
 import pool from './config/database';
@@ -21,6 +22,7 @@ app.use(express.urlencoded({ extended: true }));
 // Routes
 app.use('/', healthRoutes);
 app.use('/api/auth', authRoutes);
+app.use('/api/users', userRoutes);
 app.use('/api/payment-plans', paymentPlanRoutes);
 app.use('/api/invoices', invoiceRoutes);
 
