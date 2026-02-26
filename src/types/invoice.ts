@@ -30,7 +30,7 @@ export interface UpdateInvoiceDTO {
 }
 
 export interface InvoiceFilters {
-    user_id?: number;
+    nameOrEmail?: string;
     payment_plan_id?: number;
     status?: InvoiceStatus;
     start_date?: Date;

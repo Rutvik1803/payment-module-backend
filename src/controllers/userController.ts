@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
-import { findAllUsers, findUserById } from '../models/User';
+import * as userService from '../services/userService';
 import { sendSuccess } from '../utils/responseFormatter';
+import { BadRequestError } from '../utils/errors';
 
 /**
  * Get all users with optional role filter
@@ -9,15 +10,9 @@ export const getAllUsers = async (req: Request, res: Response) => {
     const { role } = req.query;
 
     const filters = role ? { role: role as string } : undefined;
-    const users = await findAllUsers(filters);
+    const users = await userService.getAllUsers(filters);
 
-    // Remove password_hash from response
-    const sanitizedUsers = users.map(user => {
-        const { password_hash, ...userWithoutPassword } = user;
-        return userWithoutPassword;
-    });
-
-    sendSuccess(res, sanitizedUsers, 'Users retrieved successfully');
+    sendSuccess(res, users, 'Users retrieved successfully');
 };
 
 /**
@@ -26,19 +21,11 @@ export const getAllUsers = async (req: Request, res: Response) => {
 export const getUserById = async (req: Request, res: Response) => {
     const userId = parseInt(req.params.id as string, 10);
 
-    const user = await findUserById(userId);
-
-    if (!user) {
-        return res.status(404).json({
-            success: false,
-            error: 'Not found',
-            message: 'User not found',
-            statusCode: 404,
-        });
+    if (isNaN(userId)) {
+        throw BadRequestError('Invalid user ID');
     }
 
-    // Remove password_hash from response
-    const { password_hash, ...userWithoutPassword } = user;
+    const user = await userService.getUserById(userId);
 
-    sendSuccess(res, userWithoutPassword, 'User retrieved successfully');
+    sendSuccess(res, user, 'User retrieved successfully');
 };

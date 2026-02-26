@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import invoiceController from '../controllers/invoiceController';
+import * as invoiceController from '../controllers/invoiceController';
 import { authenticate } from '../middleware/auth';
 import { asyncHandler } from '../utils/asyncHandler';
 
@@ -18,7 +18,7 @@ const router = Router();
 router.get(
     '/user/:userId',
     authenticate,
-    asyncHandler(invoiceController.getUserInvoices.bind(invoiceController))
+    asyncHandler(invoiceController.getUserInvoices)
 );
 
 // Get invoices for a specific payment plan
@@ -27,7 +27,7 @@ router.get(
 router.get(
     '/payment-plan/:paymentPlanId',
     authenticate,
-    asyncHandler(invoiceController.getInvoicesByPaymentPlan.bind(invoiceController))
+    asyncHandler(invoiceController.getInvoicesByPaymentPlan)
 );
 
 // Get invoice summary (totals, status counts)
@@ -36,7 +36,7 @@ router.get(
 router.get(
     '/:id/summary',
     authenticate,
-    asyncHandler(invoiceController.getInvoiceSummary.bind(invoiceController))
+    asyncHandler(invoiceController.getInvoiceSummary)
 );
 
 // Update invoice status
@@ -45,7 +45,7 @@ router.get(
 router.patch(
     '/:id/status',
     authenticate,
-    asyncHandler(invoiceController.updateInvoiceStatus.bind(invoiceController))
+    asyncHandler(invoiceController.updateInvoiceStatus)
 );
 
 // Cancel an invoice
@@ -54,7 +54,7 @@ router.patch(
 router.post(
     '/:id/cancel',
     authenticate,
-    asyncHandler(invoiceController.cancelInvoice.bind(invoiceController))
+    asyncHandler(invoiceController.cancelInvoice)
 );
 
 // Mark invoice as paid (for offline payments)
@@ -63,7 +63,7 @@ router.post(
 router.post(
     '/:id/mark-paid',
     authenticate,
-    asyncHandler(invoiceController.markInvoiceAsPaid.bind(invoiceController))
+    asyncHandler(invoiceController.markInvoiceAsPaid)
 );
 
 // Get invoice by ID
@@ -72,16 +72,16 @@ router.post(
 router.get(
     '/:id',
     authenticate,
-    asyncHandler(invoiceController.getInvoiceById.bind(invoiceController))
+    asyncHandler(invoiceController.getInvoiceById)
 );
 
 // Get all invoices with pagination and filters
-// GET /api/invoices?page=1&limit=10&status=PENDING&userId=5
+// GET /api/invoices?page=1&limit=10&status=PENDING&search=example
 // Admin only - checked in controller
 router.get(
     '/',
     authenticate,
-    asyncHandler(invoiceController.getAllInvoices.bind(invoiceController))
+    asyncHandler(invoiceController.getAllInvoices)
 );
 
 export default router;

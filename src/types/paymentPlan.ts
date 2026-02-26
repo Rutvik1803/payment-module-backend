@@ -1,3 +1,5 @@
+import { UserResponse } from "./user";
+
 export type PaymentPlanStatus = 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
 export type PaymentPlanType = 'ONE_TIME' | 'INSTALLMENT';
 
@@ -10,6 +12,7 @@ export interface PaymentPlan {
     status: PaymentPlanStatus;
     type: PaymentPlanType;
     number_of_installments: number | null;
+    user: UserResponse & Omit<UserResponse, 'created_at'>;
     start_date: Date;
     created_at: Date;
     updated_at: Date;

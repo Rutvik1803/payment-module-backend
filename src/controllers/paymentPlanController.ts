@@ -3,7 +3,6 @@ import * as paymentPlanService from '../services/paymentPlanService';
 import { sendSuccess, sendPaginated } from '../utils/responseFormatter';
 import { CreatePaymentPlanDTO, PaymentPlanStatus } from '../types/paymentPlan';
 import { BadRequestError, ForbiddenError, NotFoundError } from '../utils/errors';
-import { findPaymentPlansByUserId, findAllPaymentPlans } from '../models/PaymentPlan';
 import { UserResponse } from '../types/user';
 
 // Extend Express Request type to include user
@@ -98,32 +97,24 @@ export const getAllPaymentPlans = async (req: Request, res: Response) => {
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 10;
     const status = req.query.status as PaymentPlanStatus | undefined;
-    const userId = req.query.user_id ? parseInt(req.query.user_id as string) : undefined;
+    const paymentType = req.query.type as 'ONE_TIME' | 'INSTALLMENT' | undefined;
+    const searchTerm = req.query.search as string | undefined;
 
     // Validate pagination parameters
     if (page < 1 || limit < 1 || limit > 100) {
         throw BadRequestError('Invalid pagination parameters. Page must be >= 1, limit must be 1-100');
     }
 
-    // Get filtered payment plans
-    let plans = await findAllPaymentPlans();
+    // Get filtered payment plans from service
+    const result = await paymentPlanService.getAllPaymentPlansWithPagination({
+        page,
+        limit,
+        status,
+        type: paymentType,
+        searchTerm,
+    });
 
-    // Apply filters
-    if (status) {
-        plans = plans.filter(plan => plan.status === status);
-    }
-
-    if (userId) {
-        plans = plans.filter(plan => plan.user_id === userId);
-    }
-
-    // Calculate pagination
-    const total = plans.length;
-    const startIndex = (page - 1) * limit;
-    const endIndex = startIndex + limit;
-    const paginatedPlans = plans.slice(startIndex, endIndex);
-
-    sendPaginated(res, paginatedPlans, total, page, limit);
+    sendPaginated(res, result.items, result.total, result.page, result.limit);
 };
 
 /**

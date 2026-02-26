@@ -117,9 +117,9 @@ export const findAllInvoices = async (
     const values: any[] = [];
     let paramCount = 1;
 
-    if (filters?.user_id) {
-        sql += ` AND user_id = $${paramCount}`;
-        values.push(filters.user_id);
+    if (filters?.nameOrEmail) {
+        sql += ` AND (first_name ILIKE $${paramCount} OR last_name ILIKE $${paramCount} OR email ILIKE $${paramCount})`;
+        values.push(`%${filters.nameOrEmail}%`);
         paramCount++;
     }
 
@@ -357,4 +357,124 @@ export const invoiceNumberExists = async (
     const sql = 'SELECT COUNT(*) as count FROM invoices WHERE invoice_number = $1';
     const result: QueryResult = await pool.query(sql, [invoice_number]);
     return parseInt(result.rows[0].count) > 0;
+};
+
+/**
+ * Get all invoices with pagination, user data, and filters
+ */
+export const findAllInvoicesWithPagination = async (params: {
+    page: number;
+    limit: number;
+    status?: InvoiceStatus;
+    nameOrEmail?: string;
+    paymentPlanId?: number;
+}): Promise<{
+    invoices: Invoice[];
+    total: number;
+}> => {
+    const { page, limit, status, nameOrEmail, paymentPlanId } = params;
+    const offset = (page - 1) * limit;
+
+    // Build SQL for pagination with user data
+    let sql = `
+        SELECT 
+            i.*,
+            json_build_object(
+                'id', u.id,
+                'email', u.email,
+                'first_name', u.first_name,
+                'last_name', u.last_name,
+                'role', u.role
+            ) as user
+        FROM invoices i
+        LEFT JOIN users u ON i.user_id = u.id
+        WHERE 1=1
+    `;
+    const values: any[] = [];
+    let paramCount = 1;
+
+    if (status) {
+        sql += ` AND i.status = $${paramCount}`;
+        values.push(status);
+        paramCount++;
+    }
+    if (nameOrEmail) {
+        sql += ` AND (u.first_name ILIKE $${paramCount} OR u.last_name ILIKE $${paramCount} OR u.email ILIKE $${paramCount})`;
+        values.push(`%${nameOrEmail}%`);
+        paramCount++;
+    }
+    if (paymentPlanId) {
+        sql += ` AND i.payment_plan_id = $${paramCount}`;
+        values.push(paymentPlanId);
+        paramCount++;
+    }
+
+    // Get total count
+    const countSql = sql.replace(
+        /SELECT[\s\S]*?FROM/,
+        'SELECT COUNT(*) FROM'
+    ).split('LIMIT')[0].split('ORDER BY')[0];
+
+    const countResult = await pool.query(countSql, values);
+    const total = parseInt(countResult.rows[0].count);
+
+    // Get paginated invoices
+    sql += ` ORDER BY i.due_date DESC LIMIT $${paramCount} OFFSET $${paramCount + 1}`;
+    values.push(limit, offset);
+
+    const result: QueryResult<Invoice> = await pool.query(sql, values);
+
+    return {
+        invoices: result.rows,
+        total,
+    };
+};
+
+/**
+ * Get user invoices with pagination and filters
+ */
+export const findUserInvoicesWithPagination = async (params: {
+    userId: number;
+    page: number;
+    limit: number;
+    status?: InvoiceStatus;
+    paymentPlanId?: number;
+}): Promise<{
+    invoices: Invoice[];
+    total: number;
+}> => {
+    const { userId, page, limit, status, paymentPlanId } = params;
+    const offset = (page - 1) * limit;
+
+    // Build SQL for pagination
+    let sql = 'SELECT * FROM invoices WHERE user_id = $1';
+    const values: any[] = [userId];
+    let paramCount = 2;
+
+    if (status) {
+        sql += ` AND status = $${paramCount}`;
+        values.push(status);
+        paramCount++;
+    }
+    if (paymentPlanId) {
+        sql += ` AND payment_plan_id = $${paramCount}`;
+        values.push(paymentPlanId);
+        paramCount++;
+    }
+
+    // Get total count
+    const countSql = sql.replace('SELECT *', 'SELECT COUNT(*)');
+    const countResult = await pool.query(countSql, values);
+    const total = parseInt(countResult.rows[0].count);
+
+    // Get paginated invoices
+    sql += ` ORDER BY due_date DESC LIMIT $${paramCount} OFFSET $${paramCount + 1}`;
+    values.push(limit, offset);
+
+    const result: QueryResult<Invoice> = await pool.query(sql, values);
+
+    return {
+        invoices: result.rows,
+        total,
+    };
 };

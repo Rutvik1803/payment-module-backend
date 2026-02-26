@@ -13,6 +13,8 @@ import {
     findInvoiceByNumber,
     findInvoicesByPaymentPlan,
     findInvoicesByUserId,
+    findAllInvoicesWithPagination,
+    findUserInvoicesWithPagination,
 } from '../models/Invoice';
 import {
     findPaymentScheduleById,
@@ -30,7 +32,7 @@ import {
     BadRequestError,
     InternalServerError,
 } from '../utils/errors';
-import { Invoice, CreateInvoiceDTO } from '../types/invoice';
+import { Invoice, CreateInvoiceDTO, InvoiceStatus } from '../types/invoice';
 import { PaymentSchedule } from '../types/paymentSchedule';
 import { PaymentPlan } from '../types/paymentPlan';
 import { UserResponse } from '../types/user';
@@ -420,6 +422,92 @@ const getInvoiceSummaryByUser = async (userId: number): Promise<InvoiceSummary> 
 };
 
 /**
+ * Get all invoices with pagination and filters (Admin only)
+ */
+const getAllInvoicesWithPagination = async (params: {
+    page: number;
+    limit: number;
+    status?: InvoiceStatus;
+    nameOrEmail?: string;
+    paymentPlanId?: number;
+}): Promise<{
+    invoices: Invoice[];
+    pagination: {
+        page: number;
+        limit: number;
+        total: number;
+        totalPages: number;
+    };
+}> => {
+    const { page, limit, status, nameOrEmail, paymentPlanId } = params;
+
+    // Call model function for database query
+    const { invoices, total } = await findAllInvoicesWithPagination({
+        page,
+        limit,
+        status,
+        nameOrEmail,
+        paymentPlanId,
+    });
+
+    return {
+        invoices,
+        pagination: {
+            page,
+            limit,
+            total,
+            totalPages: Math.ceil(total / limit),
+        },
+    };
+};
+
+/**
+ * Get user invoices with pagination and filters
+ */
+const getUserInvoicesWithPagination = async (params: {
+    userId: number;
+    page: number;
+    limit: number;
+    status?: InvoiceStatus;
+    paymentPlanId?: number;
+}): Promise<{
+    invoices: Invoice[];
+    pagination: {
+        page: number;
+        limit: number;
+        total: number;
+        totalPages: number;
+    };
+}> => {
+    const { userId, page, limit, status, paymentPlanId } = params;
+
+    // Verify user exists
+    const user = await findUserById(userId);
+    if (!user) {
+        throw NotFoundError(`User with ID ${userId} not found`);
+    }
+
+    // Call model function for database query
+    const { invoices, total } = await findUserInvoicesWithPagination({
+        userId,
+        page,
+        limit,
+        status,
+        paymentPlanId,
+    });
+
+    return {
+        invoices,
+        pagination: {
+            page,
+            limit,
+            total,
+            totalPages: Math.ceil(total / limit),
+        },
+    };
+};
+
+/**
  * Export all service functions
  */
 export default {
@@ -430,4 +518,6 @@ export default {
     getInvoicesByPaymentPlan,
     regenerateInvoiceForSchedule,
     getInvoiceSummaryByUser,
+    getAllInvoicesWithPagination,
+    getUserInvoicesWithPagination,
 };

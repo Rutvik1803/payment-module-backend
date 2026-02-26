@@ -350,6 +350,61 @@ export const recalculatePaymentPlanAmounts = async (
     return updatedPlan;
 };
 
+/**
+ * Get all payment plans with pagination and filters
+ */
+export const getAllPaymentPlansWithPagination = async (params: {
+    page: number;
+    limit: number;
+    status?: PaymentPlanStatus;
+    type?: PaymentPlanType;
+    searchTerm?: string;
+}): Promise<{
+    items: PaymentPlan[];
+    total: number;
+    page: number;
+    limit: number;
+}> => {
+    const { page, limit, status, type, searchTerm } = params;
+
+    // Import findAllPaymentPlans from model
+    const { findAllPaymentPlans } = await import('../models/PaymentPlan');
+
+    // Get all plans (model already includes user data)
+    let plans = await findAllPaymentPlans();
+
+    // Apply filters
+    if (status) {
+        plans = plans.filter(plan => plan.status === status);
+    }
+
+    if (type) {
+        plans = plans.filter(plan => plan.type === type);
+    }
+
+    if (searchTerm) {
+        const lowerSearchTerm = searchTerm.toLowerCase();
+        plans = plans.filter(plan =>
+            plan.user.first_name.toLowerCase().includes(lowerSearchTerm) ||
+            plan.user.last_name.toLowerCase().includes(lowerSearchTerm) ||
+            plan.user.email.toLowerCase().includes(lowerSearchTerm)
+        );
+    }
+
+    // Calculate pagination
+    const total = plans.length;
+    const startIndex = (page - 1) * limit;
+    const endIndex = startIndex + limit;
+    const paginatedPlans = plans.slice(startIndex, endIndex);
+
+    return {
+        items: paginatedPlans,
+        total,
+        page,
+        limit,
+    };
+};
+
 export default {
     createPaymentPlanWithSchedule,
     getPaymentPlanWithSchedules,
@@ -359,4 +414,5 @@ export default {
     cancelPaymentPlan,
     deletePaymentPlanWithSchedules,
     recalculatePaymentPlanAmounts,
+    getAllPaymentPlansWithPagination,
 };
