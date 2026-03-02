@@ -30,6 +30,15 @@ router.get(
     asyncHandler(invoiceController.getInvoicesByPaymentPlan)
 );
 
+// Generate invoices for a payment plan
+// POST /api/invoices/generate/payment-plan/:paymentPlanId
+// Admin only - checked in controller
+router.post(
+    '/generate/payment-plan/:paymentPlanId',
+    authenticate,
+    asyncHandler(invoiceController.generateInvoicesForPlan)
+);
+
 // Get invoice summary (totals, status counts)
 // GET /api/invoices/:id/summary
 // Note: Specific subpath must come before generic /:id

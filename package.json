@@ -11,6 +11,10 @@
     "migrate": "ts-node src/database/migrate.ts",
     "seed": "ts-node src/database/seed.ts",
     "db:reset": "npm run migrate && npm run seed",
+    "reset:payments": "ts-node src/scripts/resetPaymentData.ts",
+    "seed:payments": "ts-node src/scripts/seedPaymentData.ts",
+    "db:refresh": "npm run reset:payments && npm run seed:payments",
+    "link:invoices": "ts-node src/scripts/linkInvoicesToSchedules.ts",
     "generate-hash": "ts-node src/utils/generateHash.ts"
   },
   "keywords": [],

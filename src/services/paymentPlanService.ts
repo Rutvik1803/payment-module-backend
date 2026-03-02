@@ -40,13 +40,16 @@ import {
     validatePaymentPlanParams,
     validateStartDate,
 } from '../utils/paymentCalculations';
+import invoiceService from './invoiceService';
+import { Invoice } from '../types/invoice';
 
 /**
- * Payment plan with schedules
+ * Payment plan with schedules and invoices
  */
 export interface PaymentPlanWithSchedules {
     plan: PaymentPlan;
     schedules: PaymentSchedule[];
+    invoices?: Invoice[];
 }
 
 /**
@@ -125,9 +128,20 @@ export const createPaymentPlanWithSchedule = async (
         start_date
     );
 
+    // Step 7: Auto-generate invoices from schedules
+    let invoices: Invoice[] = [];
+    try {
+        const invoiceResult = await invoiceService.generateInvoicesForPaymentPlan(plan.id);
+        invoices = invoiceResult.invoices;
+    } catch (error) {
+        // Log but don't fail if invoice generation fails
+        console.error(`Failed to auto-generate invoices for plan ${plan.id}:`, error);
+    }
+
     return {
         plan,
         schedules,
+        invoices,
     };
 };
 

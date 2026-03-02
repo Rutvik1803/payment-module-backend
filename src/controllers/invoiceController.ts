@@ -13,6 +13,7 @@ import { sendSuccess } from '../utils/responseFormatter';
 import { BadRequestError, NotFoundError, ForbiddenError } from '../utils/errors';
 import invoiceService from '../services/invoiceService';
 import { findInvoiceById, updateInvoiceStatus as updateInvoiceStatusModel, updateInvoice } from '../models/Invoice';
+import { findPaymentSchedulesByInvoiceId, markScheduleAsPaid } from '../models/PaymentSchedule';
 import { InvoiceStatus } from '../types/invoice';
 
 /**
@@ -287,11 +288,20 @@ export const markInvoiceAsPaid = async (req: Request, res: Response) => {
         status: 'PAID',
     });
 
+    // Also mark the associated payment schedule(s) as paid
+    const paymentSchedules = await findPaymentSchedulesByInvoiceId(invoiceId);
+    for (const schedule of paymentSchedules) {
+        if (schedule.status !== 'PAID') {
+            await markScheduleAsPaid(schedule.id, new Date(), invoiceId);
+        }
+    }
+
     sendSuccess(
         res,
         {
             invoice: updatedInvoice,
             message: 'Invoice marked as paid (offline payment)',
+            schedulesUpdated: paymentSchedules.length,
         },
         'Invoice marked as paid successfully'
     );
@@ -354,4 +364,32 @@ export const getInvoiceSummary = async (req: Request, res: Response) => {
     };
 
     sendSuccess(res, summary, 'Invoice summary retrieved successfully');
+};
+
+/**
+ * Generate invoices for a payment plan (Admin only)
+ * POST /api/invoices/generate/payment-plan/:paymentPlanId
+ * Manually trigger invoice generation for existing payment plans
+ */
+export const generateInvoicesForPlan = async (req: Request, res: Response) => {
+    // Only admins can generate invoices
+    if (req.user?.role !== 'admin') {
+        throw ForbiddenError('Admin access required');
+    }
+
+    const paymentPlanId = parseInt(String(req.params.paymentPlanId));
+
+    if (isNaN(paymentPlanId)) {
+        throw BadRequestError('Invalid payment plan ID');
+    }
+
+    // Generate invoices using service
+    const result = await invoiceService.generateInvoicesForPaymentPlan(paymentPlanId);
+
+    sendSuccess(
+        res,
+        result,
+        `Successfully generated ${result.count} invoice(s) for payment plan`,
+        201
+    );
 };

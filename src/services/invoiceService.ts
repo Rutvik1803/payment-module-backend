@@ -19,6 +19,7 @@ import {
 import {
     findPaymentScheduleById,
     findPaymentSchedulesByPlanId,
+    updatePaymentSchedule,
 } from '../models/PaymentSchedule';
 import { findPaymentPlanById } from '../models/PaymentPlan';
 import { findUserById } from '../models/User';
@@ -235,6 +236,9 @@ const generateInvoicesForPaymentPlan = async (
 
             const invoice = await createInvoice(invoiceData);
             createdInvoices.push(invoice);
+
+            // Link the invoice back to the payment schedule
+            await updatePaymentSchedule(schedule.id, { invoice_id: invoice.id });
         }
 
         await client.query('COMMIT');
